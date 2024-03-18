@@ -5,13 +5,26 @@ pipeline {
         stage('Delete Unnecessary Files') {
             steps {
                 script {
-                    // Especifica la ruta del directorio que deseas limpiar
-                    def directoryPath = '/ruta/al/directorio'
+                    // Prompt user for directory path
+                    def userInput = input(
+                        id: 'directoryInput',
+                        message: 'Enter the directory path to clean:',
+                        parameters: [
+                            [$class: 'TextParameterDefinition', defaultValue: '', description: 'Directory Path', name: 'directoryPath']
+                        ])
 
-                    // Lógica para eliminar archivos innecesarios utilizando auto-remove
+                    // Get directory path from user input
+                    def directoryPath = userInput['directoryPath']
+
+                    // Check if directory path is empty
+                    if (directoryPath.isEmpty()) {
+                        error("Directory path cannot be empty.")
+                    }
+
+                    // Logic to delete unnecessary files using auto-remove
                     sh "find ${directoryPath} -name '*.tmp' -auto-remove"
                     
-                    echo "Archivos innecesarios eliminados exitosamente en ${directoryPath}."
+                    echo "Unnecessary files deleted successfully in ${directoryPath}."
                 }
             }
         }
