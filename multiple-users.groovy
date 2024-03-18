@@ -1,10 +1,10 @@
+def userExists(username) {
+    def existingUser = jenkins.model.Jenkins.instance.getUser(username)
+    return existingUser != null
+}
+
 node {
     stage('Create Jenkins Users') {
-        def userExists(username) {
-            def existingUser = jenkins.model.Jenkins.instance.getUser(username)
-            return existingUser != null
-        }
-
         def createNewUser = true
 
         while (createNewUser) {
@@ -53,3 +53,4 @@ node {
         }
     }
 }
+
