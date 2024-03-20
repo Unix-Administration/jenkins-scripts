@@ -35,8 +35,8 @@ node {
                     }
 
                     username = userInput['username']
-                    password = userInput['password']
-                    confirmPassword = userInput['confirmPassword']
+                    password = userInput['password'].toString() // Retrieve password as string
+                    confirmPassword = userInput['confirmPassword'].toString() // Retrieve confirmPassword as string
                     fullName = userInput['fullName']
                     email = userInput['email']
 
