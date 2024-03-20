@@ -3,29 +3,33 @@ def userExists(username) {
     return existingUser != null
 }
 
-def createNewUser = true
-
 node {
     stage('Create Jenkins Users') {
+        def createNewUser = true
+
         while (createNewUser) {
             def username = ''
             def password = ''
 
-            def userInput = input(
-                id: 'userInput',
-                message: 'Introduce a username and a password',
-                parameters: [
-                    [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a username', name: 'username'],
-                    [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a password', name: 'password']
-                ])
+            while (username.isEmpty() || password.isEmpty() || userExists(username)) {
+                stage('User Input') {
+                    def userInput = input(
+                        id: 'userInput',
+                        message: 'Introduce a username and a password',
+                        parameters: [
+                            [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a username', name: 'username'],
+                            [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a password', name: 'password']
+                        ])
 
-            username = userInput['username']
-            password = userInput['password']
+                    username = userInput['username']
+                    password = userInput['password']
 
-            if (username.isEmpty() || password.isEmpty()) {
-                error "Username and password are required fields and cannot be empty."
-            } else if (userExists(username)) {
-                error "User '${username}' already exists. Please choose a different username."
+                    if (username.isEmpty() || password.isEmpty()) {
+                        echo "Username and password are required fields and cannot be empty."
+                    } else if (userExists(username)) {
+                        echo "User '${username}' already exists. Please choose a different username."
+                    }
+                }
             }
 
             def instance = jenkins.model.Jenkins.instance
@@ -35,15 +39,6 @@ node {
             newUser.save()
 
             echo "Jenkins user '${username}' created successfully."
-
-            def moreUsersInput = input(
-                id: 'moreUsersInput',
-                message: 'Do you want to add more users?',
-                parameters: [
-                    [$class: 'BooleanParameterDefinition', defaultValue: true, description: 'Add more users?', name: 'moreUsers']
-                ])
-
-            createNewUser = moreUsersInput['moreUsers']
         }
     }
 }
