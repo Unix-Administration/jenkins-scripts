@@ -40,16 +40,6 @@ node {
 
             echo "Jenkins user '${username}' created successfully."
             echo "Press 'q' to finish the process."
-
-            // Prompt user for adding more users
-            def moreUsersInput = input(
-                id: 'moreUsersInput',
-                message: 'Do you want to add more users?',
-                parameters: [
-                    [$class: 'BooleanParameterDefinition', defaultValue: true, description: 'Add more users?', name: 'moreUsers']
-                ])
-
-            createNewUser = moreUsersInput['moreUsers']
         }
     }
 }
