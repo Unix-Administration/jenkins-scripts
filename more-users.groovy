@@ -1,7 +1,7 @@
 def userExists(username, email) {
     def existingUser = jenkins.model.Jenkins.instance.getUser(username)
-    def existingEmail = jenkins.model.Jenkins.instance.getUserByEmail(email)
-    return existingUser != null || existingEmail != null
+    def existingEmailUser = jenkins.model.Jenkins.instance.getUserByFullName(email)
+    return existingUser != null || existingEmailUser != null
 }
 
 node {
@@ -28,12 +28,6 @@ node {
                             [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert an email', name: 'email']
                         ])
 
-                    // Check if user wants to quit
-                    if (userInput['username'].equalsIgnoreCase('q') || userInput['password'].equalsIgnoreCase('q') || userInput['confirmPassword'].equalsIgnoreCase('q') || userInput['fullName'].equalsIgnoreCase('q') || userInput['email'].equalsIgnoreCase('q')) {
-                        createNewUser = false
-                        break // Exit the inner loop
-                    }
-
                     username = userInput['username']
                     password = userInput['password'].toString() // Retrieve password as string
                     confirmPassword = userInput['confirmPassword'].toString() // Retrieve confirmPassword as string
@@ -50,11 +44,6 @@ node {
                 }
             }
 
-            // Check if user wants to quit
-            if (!createNewUser) {
-                break // Exit the outer loop
-            }
-
             def instance = jenkins.model.Jenkins.instance
             def hudsonRealm = instance.getSecurityRealm()
 
@@ -62,7 +51,6 @@ node {
             newUser.save()
 
             echo "Jenkins user '${username}' with full name '${fullName}' and email '${email}' created successfully."
-            echo "Press 'q' to finish the process."
         }
     }
 }
