@@ -15,11 +15,17 @@ node {
                 stage('User Input') {
                     def userInput = input(
                         id: 'userInput',
-                        message: 'Introduce a username and a password',
+                        message: 'Introduce a username and a password, or press "q" to finish:',
                         parameters: [
                             [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a username', name: 'username'],
                             [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a password', name: 'password']
                         ])
+
+                    // Check if user wants to quit
+                    if (userInput['username'].equalsIgnoreCase('q') || userInput['password'].equalsIgnoreCase('q')) {
+                        createNewUser = false
+                        break // Exit the inner loop
+                    }
 
                     username = userInput['username']
                     password = userInput['password']
@@ -30,6 +36,11 @@ node {
                         echo "User '${username}' already exists. Please choose a different username."
                     }
                 }
+            }
+
+            // Check if user wants to quit
+            if (!createNewUser) {
+                break // Exit the outer loop
             }
 
             def instance = jenkins.model.Jenkins.instance
