@@ -19,7 +19,7 @@ node {
                 stage('User Input') {
                     def userInput = input(
                         id: 'userInput',
-                        message: 'Introduce the following details to create a user, or press "q" to finish:',
+                        message: 'Introduce the following details to create a user',
                         parameters: [
                             [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a username', name: 'username'],
                             [$class: 'PasswordParameterDefinition', defaultValue: '', description: 'Insert a password', name: 'password'],
@@ -47,10 +47,11 @@ node {
             def instance = jenkins.model.Jenkins.instance
             def hudsonRealm = instance.getSecurityRealm()
 
-            def newUser = hudsonRealm.createAccount(username, password, fullName, email)
-            newUser.save()
+            def newUser = new hudson.model.User(username, password, fullName, email)
+            hudsonRealm.createAccount(newUser)
 
             echo "Jenkins user '${username}' with full name '${fullName}' and email '${email}' created successfully."
+            echo "Press 'q' to finish the process."
         }
     }
 }
