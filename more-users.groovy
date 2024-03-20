@@ -1,7 +1,7 @@
-def userExists(username, fullName) {
-    def userWithSameName = jenkins.model.Jenkins.instance.getUser(fullName)
+def userExists(username, email) {
     def existingUser = jenkins.model.Jenkins.instance.getUser(username)
-    return userWithSameName != null || existingUser != null
+    def existingEmail = jenkins.model.Jenkins.instance.getUserByEmail(email)
+    return existingUser != null || existingEmail != null
 }
 
 node {
@@ -11,40 +11,58 @@ node {
         while (createNewUser) {
             def username = ''
             def password = ''
+            def confirmPassword = ''
             def fullName = ''
+            def email = ''
 
-            while (username.isEmpty() || password.isEmpty() || fullName.isEmpty() || userExists(username, fullName)) {
+            while (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || fullName.isEmpty() || email.isEmpty() || userExists(username, email)) {
                 stage('User Input') {
                     def userInput = input(
                         id: 'userInput',
-                        message: 'Introduce a username, a password, and a full name, or press "q" to finish:',
+                        message: 'Introduce the following details to create a user, or press "q" to finish:',
                         parameters: [
                             [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a username', name: 'username'],
-                            [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a password', name: 'password'],
-                            [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a full name', name: 'fullName']
+                            [$class: 'PasswordParameterDefinition', defaultValue: '', description: 'Insert a password', name: 'password'],
+                            [$class: 'PasswordParameterDefinition', defaultValue: '', description: 'Confirm password', name: 'confirmPassword'],
+                            [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a full name', name: 'fullName'],
+                            [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert an email', name: 'email']
                         ])
+
+                    // Check if user wants to quit
+                    if (userInput['username'].equalsIgnoreCase('q') || userInput['password'].equalsIgnoreCase('q') || userInput['confirmPassword'].equalsIgnoreCase('q') || userInput['fullName'].equalsIgnoreCase('q') || userInput['email'].equalsIgnoreCase('q')) {
+                        createNewUser = false
+                        break // Exit the inner loop
+                    }
 
                     username = userInput['username']
                     password = userInput['password']
+                    confirmPassword = userInput['confirmPassword']
                     fullName = userInput['fullName']
+                    email = userInput['email']
 
-                    if (username.isEmpty() || password.isEmpty() || fullName.isEmpty()) {
-                        echo "Username, password, and full name are required fields and cannot be empty."
-                    } else if (userExists(username, fullName)) {
-                        echo "User with the same username or full name already exists. Please choose a different username and full name."
+                    if (username.isEmpty() || password.isEmpty() || confirmPassword.isEmpty() || fullName.isEmpty() || email.isEmpty()) {
+                        echo "All fields are required and cannot be empty."
+                    } else if (password != confirmPassword) {
+                        echo "Passwords do not match. Please try again."
+                    } else if (userExists(username, email)) {
+                        echo "User with the same username or email already exists. Please choose a different username and email."
                     }
                 }
+            }
+
+            // Check if user wants to quit
+            if (!createNewUser) {
+                break // Exit the outer loop
             }
 
             def instance = jenkins.model.Jenkins.instance
             def hudsonRealm = instance.getSecurityRealm()
 
-            def newUser = hudsonRealm.createAccount(username, password, fullName)
+            def newUser = hudsonRealm.createAccount(username, password, fullName, email)
             newUser.save()
 
-            echo "Jenkins user '${username}' with full name '${fullName}' created successfully."
+            echo "Jenkins user '${username}' with full name '${fullName}' and email '${email}' created successfully."
             echo "Press 'q' to finish the process."
         }
     }
 }
-
