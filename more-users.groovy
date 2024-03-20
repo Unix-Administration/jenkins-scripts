@@ -1,6 +1,7 @@
-def userExists(username) {
+def userExists(username, fullName) {
+    def userWithSameName = jenkins.model.Jenkins.instance.getUser(fullName)
     def existingUser = jenkins.model.Jenkins.instance.getUser(username)
-    return existingUser != null
+    return userWithSameName != null || existingUser != null
 }
 
 node {
@@ -10,47 +11,40 @@ node {
         while (createNewUser) {
             def username = ''
             def password = ''
+            def fullName = ''
 
-            while (username.isEmpty() || password.isEmpty() || userExists(username)) {
+            while (username.isEmpty() || password.isEmpty() || fullName.isEmpty() || userExists(username, fullName)) {
                 stage('User Input') {
                     def userInput = input(
                         id: 'userInput',
-                        message: 'Introduce a username and a password, or press "q" to finish:',
+                        message: 'Introduce a username, a password, and a full name, or press "q" to finish:',
                         parameters: [
                             [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a username', name: 'username'],
-                            [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a password', name: 'password']
+                            [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a password', name: 'password'],
+                            [$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert a full name', name: 'fullName']
                         ])
-
-                    // Check if user wants to quit
-                    if (userInput['username'].equalsIgnoreCase('q') || userInput['password'].equalsIgnoreCase('q')) {
-                        createNewUser = false
-                        break // Exit the inner loop
-                    }
 
                     username = userInput['username']
                     password = userInput['password']
+                    fullName = userInput['fullName']
 
-                    if (username.isEmpty() || password.isEmpty()) {
-                        echo "Username and password are required fields and cannot be empty."
-                    } else if (userExists(username)) {
-                        echo "User '${username}' already exists. Please choose a different username."
+                    if (username.isEmpty() || password.isEmpty() || fullName.isEmpty()) {
+                        echo "Username, password, and full name are required fields and cannot be empty."
+                    } else if (userExists(username, fullName)) {
+                        echo "User with the same username or full name already exists. Please choose a different username and full name."
                     }
                 }
-            }
-
-            // Check if user wants to quit
-            if (!createNewUser) {
-                break // Exit the outer loop
             }
 
             def instance = jenkins.model.Jenkins.instance
             def hudsonRealm = instance.getSecurityRealm()
 
-            def newUser = hudsonRealm.createAccount(username, password)
+            def newUser = hudsonRealm.createAccount(username, password, fullName)
             newUser.save()
 
-            echo "Jenkins user '${username}' created successfully."
+            echo "Jenkins user '${username}' with full name '${fullName}' created successfully."
             echo "Press 'q' to finish the process."
         }
     }
 }
+
