@@ -2,36 +2,52 @@ pipeline {
     agent any
     
     parameters {
-        string(name: 'USERNAME', defaultValue: '', description: 'Enter your username')
+        string(defaultValue: 'user1', description: 'User directory name', name: 'USERNAME')
     }
-
+    
     stages {
-        stage('Edit HTML File') {
+        stage('Edit HTML') {
             steps {
                 script {
-                    // Define paths
-                    def originalFilePath = "/var/www/${params.USERNAME}/index.html"
-                    def tempFilePath = "/tmp/index.html"
+                    // User's directory
+                    def userDir = "/var/www/${params.USERNAME}"
+                    // HTML file path
+                    def htmlFile = "${userDir}/index.html"
                     
-                    // Copy HTML file to temporary location
-                    sh "cp ${originalFilePath} ${tempFilePath}"
+                    // Check if the directory exists
+                    if (!fileExists(userDir)) {
+                        error "User directory does not exist: ${userDir}"
+                    }
                     
-                    // Open HTML file for editing (you may need to replace 'nano' with your preferred text editor)
-                    sh "nano ${tempFilePath}"
-                    
-                    // Copy edited HTML file back to original location
-                    sh "cp ${tempFilePath} ${originalFilePath}"
+                    // Edit HTML file
+                    sh "nano ${htmlFile}"
                 }
             }
         }
-        stage('Restart Apache') {
+        
+        stage('Save Changes') {
             steps {
                 script {
-                    // Restart Apache
-                    sh "sudo systemctl restart apache2"
+                    // Restart Apache if HTML file was modified
+                    if (env.CHANGES_EXIST == 'true') {
+                        sh "systemctl restart apache2"
+                    } else {
+                        echo "No changes were made to the HTML file."
+                    }
                 }
             }
+        }
+    }
+    
+    post {
+        always {
+            // Cleanup
+            cleanWs()
         }
     }
 }
 
+// Function to check if a file exists
+def fileExists(filePath) {
+    return file(filePath).exists()
+}
