@@ -1,23 +1,37 @@
 pipeline {
     agent any
+    
+    parameters {
+        string(name: 'USERNAME', defaultValue: '', description: 'Enter your username')
+    }
 
     stages {
-        stage('Edit HTML') {
+        stage('Edit HTML File') {
             steps {
                 script {
-                    // Prompt user for HTML content
-                    def userInput = input(
-                        message: 'Enter HTML content:',
-                        parameters: [string(defaultValue: '', description: 'HTML content', name: 'htmlContent')]
-                    )
+                    // Define paths
+                    def originalFilePath = "/var/www/${params.USERNAME}/index.html"
+                    def tempFilePath = "/tmp/index.html"
                     
-                    // Write HTML content to file
-                    writeFile file: '/var/www/user1/index.html', text: userInput
-
+                    // Copy HTML file to temporary location
+                    sh "cp ${originalFilePath} ${tempFilePath}"
+                    
+                    // Open HTML file for editing (you may need to replace 'nano' with your preferred text editor)
+                    sh "nano ${tempFilePath}"
+                    
+                    // Copy edited HTML file back to original location
+                    sh "cp ${tempFilePath} ${originalFilePath}"
+                }
+            }
+        }
+        stage('Restart Apache') {
+            steps {
+                script {
                     // Restart Apache
-                    sh 'sudo systemctl restart apache2'
+                    sh "sudo systemctl restart apache2"
                 }
             }
         }
     }
 }
+
