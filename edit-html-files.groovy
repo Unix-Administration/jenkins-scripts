@@ -10,22 +10,20 @@ pipeline {
             steps {
                 script {
                     // User's directory
-                    def userDir = "/var/www/${params.USERNAME}"
+                    def userDir = "/var/www/html/${params.USERNAME}"
                     // HTML file path
-                    def htmlFile = "${userDir}/index.html"
+                    def htmlFile = "${userDir}/josue.html"
                     
                     // Check if the directory exists
                     if (!fileExists(userDir)) {
                         error "User directory does not exist: ${userDir}"
                     }
                     
-                    // Use Jenkins built-in text editor to edit HTML file
+                    // Use "Text File Operations" plugin to edit HTML file
                     // This requires the "Text File Operations" Jenkins plugin
-                    def editor = readFile(file: htmlFile).trim()
-                    def editedContent = input(message: 'Edit the HTML content:', parameters: [text(defaultValue: editor, description: 'HTML content', name: 'HTML_CONTENT')])
-                    
-                    // Save the edited content back to the file
-                    writeFile(file: htmlFile, text: editedContent)
+                    textFile = readFile file: htmlFile
+                    editedContent = textFile.replace('original_content', 'new_content')
+                    writeFile file: htmlFile, text: editedContent
                     
                     // Mark that changes were made for the next stage
                     env.CHANGES_EXIST = 'true'
