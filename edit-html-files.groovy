@@ -19,8 +19,16 @@ pipeline {
                         error "User directory does not exist: ${userDir}"
                     }
                     
-                    // Edit HTML file
-                    sh "nano ${htmlFile}"
+                    // Use Jenkins built-in text editor to edit HTML file
+                    // This requires the "Text File Operations" Jenkins plugin
+                    def editor = readFile(file: htmlFile).trim()
+                    def editedContent = input(message: 'Edit the HTML content:', parameters: [text(defaultValue: editor, description: 'HTML content', name: 'HTML_CONTENT')])
+                    
+                    // Save the edited content back to the file
+                    writeFile(file: htmlFile, text: editedContent)
+                    
+                    // Mark that changes were made for the next stage
+                    env.CHANGES_EXIST = 'true'
                 }
             }
         }
