@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Form Submission Result</title>
+</head>
+<body>
+
+<?php
+// Check if form is submitted
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $servername = "localhost";
+    $username = "username";
+    $password = "password";
+    $database = "database";
+
+    // Create connection
+    $conn = mysqli_connect($servername, $username, $password, $database);
+
+    // Check connection
+    if (!$conn) {
+        die("Connection failed: " . mysqli_connect_error());
+    }
+
+    // Retrieve form data
+    $name = $_POST['name'];
+    $email = $_POST['email'];
+
+    // SQL query to insert data into database
+    $sql = "INSERT INTO people (name, email) VALUES ('$name', '$email')";
+
+    if (mysqli_query($conn, $sql)) {
+        echo "New record inserted successfully";
+    } else {
+        echo "Error: " . $sql . "<br>" . mysqli_error($conn);
+    }
+
+    // Close connection
+    mysqli_close($conn);
+}
+?>
+
+</body>
+</html>
