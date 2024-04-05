@@ -1,59 +1,34 @@
 pipeline {
-    agent any
+	agent any
+	parameters {
+  	base64File description: 'Please add the index.html', name: 'website'
+	}
     
-    parameters {
-        string(defaultValue: 'user1', description: 'User directory name', name: 'USERNAME')
-    }
-    
-    stages {
-        stage('Edit HTML') {
-            steps {
-                script {
-                    // User's directory
-                    def userDir = "/var/www/html/${params.USERNAME}"
-                    // HTML file path
-                    def htmlFile = "${userDir}/josue.html"
-                    
-                    // Check if the directory exists
-                    if (!fileExists(userDir)) {
-                        error "User directory does not exist: ${userDir}"
-                    }
-                    
-                    // Use "Text File Operations" plugin to edit HTML file
-                    // This requires the "Text File Operations" Jenkins plugin
-                    textFile = readFile file: htmlFile
-                    editedContent = textFile.replace('original_content', 'new_content')
-                    writeFile file: htmlFile, text: editedContent
-                    
-                    // Mark that changes were made for the next stage
-                    env.CHANGES_EXIST = 'true'
-                }
-            }
-        }
-        
-        stage('Save Changes') {
-            steps {
-                script {
-                    // Restart Apache if HTML file was modified
-                    if (env.CHANGES_EXIST == 'true') {
-                        sh "systemctl restart apache2"
-                    } else {
-                        echo "No changes were made to the HTML file."
-                    }
-                }
-            }
-        }
-    }
-    
-    post {
-        always {
-            // Cleanup
-            cleanWs()
-        }
-    }
+	environment {
+    	def numberOfPage = "value"
+	}
+	stages {
+ 	stage('Stage1') {
+    	steps {
+        	script {
+            	def asd = ""
+            	userInput = input(
+               		id: 'userInput',
+               		message: 'Introduce el contenido de la pagina',
+               		parameters: [
+               			[$class: 'TextParameterDefinition', defaultValue: '', description: '-', name: '-'],
+                   		[$class: 'TextParameterDefinition', defaultValue: '', description: 'Insert el numero de la pagina', name: 'number']
+               		]
+       		)
+       		numberOfPage = userInput['number']
+            	echo "El numero de la pagina es:  '${numberOfPage}'"
+        	}
+        	withFileParameter('website') {
+              	sh 'cd /var/www/html/josue-site' + numberOfPage + ' && cat $website > josue.html '
+       		  echo 'Archivo creado exitosamente'
+            	}
+    	}
+ 	}   
+	}
 }
-
-// Function to check if a file exists
-def fileExists(filePath) {
-    return file(filePath).exists()
-}
+ 
